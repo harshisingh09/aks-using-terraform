@@ -12,9 +12,8 @@ variables:
   value: qa  
 
 # Stage-1: Terraform Validate Stage
-## Step-1: Publish Artifacts to Pipeline (Pipeline artifacts provide a way to share files between stages in a pipeline or between different pipelines. )
-## Step-2: Install Latest Terraform (0.13.5) (Ideally not needed if we use default Ubuntu Agents)
-## Step-3: Validate Terraform Manifests (terraform init, terraform validate)
+## Step-1: Publish Artifacts to Pipeline 
+## Step-3: Validate Terraform Manifests
 
 stages:
 - stage: TerraformValidate
@@ -38,7 +37,7 @@ stages:
           command: 'init'
           workingDirectory: '$(System.DefaultWorkingDirectory)/terraform-manifests'
           backendType: 'azurerm'
-          backendServiceArm: 'terraform-aks-azurerm-svc-con'
+          backendServiceArm: 'aks-azurerm-svc-con'
           backendAzureRmResourceGroupName: 'terraform-storage-rg'
           backendAzureRmStorageAccountName: 'terraformstatexlrwdrzs'
           backendAzureRmContainerName: 'tfstatefiles'
@@ -74,14 +73,14 @@ stages:
               displayName: Download SSH Key
               name: sshkey
               inputs:
-                secureFile: 'aks-terraform-devops-ssh-key-ububtu.pub'
+                secureFile: 'ssh-keys-terraform.pub'
             - task: TerraformCLI@0
               displayName: Terraform Init
               inputs:
                 command: 'init'
                 workingDirectory: '$(Pipeline.Workspace)/terraform-manifests-out'
                 backendType: 'azurerm'
-                backendServiceArm: 'terraform-aks-azurerm-svc-con'
+                backendServiceArm: 'aks-azurerm-svc-con'
                 backendAzureRmResourceGroupName: 'terraform-storage-rg'
                 backendAzureRmStorageAccountName: 'terraformstatexlrwdrzs'
                 backendAzureRmContainerName: 'tfstatefiles'
@@ -92,7 +91,7 @@ stages:
               inputs:
                 command: 'plan'
                 workingDirectory: '$(Pipeline.Workspace)/terraform-manifests-out'
-                environmentServiceName: 'terraform-aks-azurerm-svc-con'
+                environmentServiceName: 'aks-azurerm-svc-con'
                 commandOptions: '-var ssh_public_key=$(sshkey.secureFilePath) -var environment=$(DEV_ENVIRONMENT) -out $(Pipeline.Workspace)/terraform-manifests-out/$(DEV_ENVIRONMENT)-$(Build.BuildId).out'
                 allowTelemetryCollection: false
             - task: TerraformCLI@0
@@ -100,7 +99,7 @@ stages:
               inputs:
                 command: 'apply'
                 workingDirectory: '$(Pipeline.Workspace)/terraform-manifests-out'
-                environmentServiceName: 'terraform-aks-azurerm-svc-con'
+                environmentServiceName: 'aks-azurerm-svc-con'
                 commandOptions: '$(Pipeline.Workspace)/terraform-manifests-out/$(DEV_ENVIRONMENT)-$(Build.BuildId).out'
                 allowTelemetryCollection: false
 
@@ -125,14 +124,14 @@ stages:
               displayName: Download SSH Key
               name: sshkey
               inputs:
-                secureFile: 'aks-terraform-devops-ssh-key-ububtu.pub'
+                secureFile: 'ssh-keys-terraform.pub'
             - task: TerraformCLI@0
               displayName: Terraform Init
               inputs:
                 command: 'init'
                 workingDirectory: '$(Pipeline.Workspace)/terraform-manifests-out'
                 backendType: 'azurerm'
-                backendServiceArm: 'terraform-aks-azurerm-svc-con'
+                backendServiceArm: 'aks-azurerm-svc-con'
                 backendAzureRmResourceGroupName: 'terraform-storage-rg'
                 backendAzureRmStorageAccountName: 'terraformstatexlrwdrzs'
                 backendAzureRmContainerName: 'tfstatefiles'
@@ -143,7 +142,7 @@ stages:
               inputs:
                 command: 'plan'
                 workingDirectory: '$(Pipeline.Workspace)/terraform-manifests-out'
-                environmentServiceName: 'terraform-aks-azurerm-svc-con'
+                environmentServiceName: 'aks-azurerm-svc-con'
                 commandOptions: '-var ssh_public_key=$(sshkey.secureFilePath) -var environment=$(QA_ENVIRONMENT) -out $(Pipeline.Workspace)/terraform-manifests-out/$(QA_ENVIRONMENT)-$(Build.BuildId).out'
                 allowTelemetryCollection: false
             - task: TerraformCLI@0
@@ -151,6 +150,6 @@ stages:
               inputs:
                 command: 'apply'
                 workingDirectory: '$(Pipeline.Workspace)/terraform-manifests-out'
-                environmentServiceName: 'terraform-aks-azurerm-svc-con'
+                environmentServiceName: 'aks-azurerm-svc-con'
                 commandOptions: '$(Pipeline.Workspace)/terraform-manifests-out/$(QA_ENVIRONMENT)-$(Build.BuildId).out'
                 allowTelemetryCollection: false
