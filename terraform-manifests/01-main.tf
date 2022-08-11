@@ -1,51 +1,66 @@
-# We will define 
-# 1. Terraform Settings Block
-# 1. Required Version Terraform
-# 2. Required Terraform Providers
-# 3. Terraform Remote State Storage with Azure Storage Account (last step of this section)
-# 2. Terraform Provider Block for AzureRM
-# 3. Terraform Resource Block: Define a Random Pet Resource
-
-# 1. Terraform Settings Block
-terraform {
-  # 1. Required Version Terraform
-  required_version = ">= 0.13"
-  # 2. Required Terraform Providers  
-  required_providers {
-    azurerm = {
-      source  = "hashicorp/azurerm"
-      version = "~> 2.0"
-    }
-    azuread = {
-      source  = "hashicorp/azuread"
-      version = "~> 2.0"
-    }
-    random = {
-      source  = "hashicorp/random"
-      version = "~> 3.0"
-    }
-  }
-
-# Terraform State Storage to Azure Storage Container
-  backend "azurerm" {
-    #resource_group_name   = "terraform-storage-rg"
-    #storage_account_name  = "terraformstatexlrwdrzs"
-    #container_name        = "tfstatefiles"
-    #key                   = "terraform-custom-vnet.tfstate"
-  }  
+module "rg" {
+  source = "./rg"
+  resource_group_name = var.resource_group_name
+  location = var.location
+  environment = var.environment
 }
 
-
-
-# 2. Terraform Provider Block for AzureRM
-provider "azurerm" {
-  features {
-
-  }
+module "vnet" {
+  source = "./vnet"
+  name = var.vnet_name
+  resource_group_name = module.rg.rsgName
+  location = var.location
+  vnet_address_space = var.vnet_address_space
+  subnet_name = var.subnet_name
+  nsg_name = var.nsg_name
+  environment = var.environment
+  aks-demo-subnet_prefix = var.aks-demo-subnet_prefix
+  
 }
 
-# 3. Terraform Resource Block: Define a Random Pet Resource
-resource "random_pet" "aksrandom" {
+module "Log-Analytics-Workspace" {
+  source = "./Log-Analytics-Workspace"
+  law_name = var.law_name
+  location = var.location
+  resource_group_name = module.rg.rsgName
+  law_sku = var.law_sku
+  environment = var.environment
+  depends_on = [
+    module.vnet
+  ]
+}
+
+module "aks" {
+  source = "./aks"
+  aks_name = var.aks_name
+  resource_group_name = module.rg.rsgName
+  location = var.location
+  kubernetes_version = var.kubernetes_version
+  system_node_count = var.system_node_count
+  max_count = var.max_count
+  min_count = var.min_count
+  subnet_id = module.vnet.subnet_id
+  vm_size = var.vm_size
+  os_disk_size = var.os_disk_size
+  os_disk_type = var.os_disk_type
+  identity_type = var.identity_type
+  docker_bridge_cidr = var.docker_bridge_cidr
+  dns_service_ip = var.dns_service_ip
+  service_cidr = var.service_cidr
+  aks_network_plugin = var.aks_network_plugin
+  network_policy = var.network_policy
+  load_balancer_sku = var.load_balancer_sku
+  container_registry_id  = module.acr.acr_id
+  defaultpool_name = var.defaultpool_name
+  log_analytics_workspace_id = module.Log-Analytics-Workspace.law_id
+  auto_scaling = var.auto_scaling
+  environment = var.environment
 
 }
 
+module helm {
+  source = "./helm"
+  depends_on = [
+    module 
+  ]
+}
